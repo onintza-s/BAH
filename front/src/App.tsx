@@ -14,6 +14,10 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const handleSelected = (id: string) => {
+    setSelectedId((current) => (current === id ? null : id))
+  }
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -58,7 +62,7 @@ function App() {
       <Sidebar
         detections={data.detections}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={handleSelected}
       />
     </div>
   );

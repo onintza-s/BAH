@@ -1,7 +1,7 @@
 import { MapContainer, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
 import L, { type LatLngBoundsExpression } from 'leaflet';
 import type { ImageDetections, Detection } from '../types/detection';
-import React from 'react';
+import { useEffect } from 'react';
 import { getTheme } from '../theme/theme';
 
 const { palette: theme } = getTheme('dark');
@@ -24,19 +24,33 @@ function toRectBounds(det: Detection): LatLngBoundsExpression {
 function ZoomOnSelection({
   detections,
   selectedId,
+  fullBounds,
 }: {
   detections: Detection[];
   selectedId: string | null;
+  fullBounds: LatLngBoundsExpression;
 }) {
   const map = useMap();
 
-  React.useEffect(() => {
-    if (!selectedId) return;
+  useEffect(() => {
+    if (!selectedId) {
+      map.fitBounds(fullBounds, {
+        maxZoom: -1,
+        padding: [20, 20],
+      });
+      return;
+    }
+
     const det = detections.find((d) => d.id === selectedId);
     if (!det) return;
+
     const b = toRectBounds(det);
-    map.fitBounds(b, { maxZoom: 2, padding: [40, 40] });
-  }, [selectedId, detections, map]);
+
+    map.fitBounds(b, {
+      maxZoom: 2,
+      padding: [40, 40],
+    });
+  }, [selectedId, detections, fullBounds, map]);
 
   return null;
 }
@@ -59,7 +73,11 @@ export function Map({ data, imagePath, selectedId, onSelect }: Props) {
     >
       <ImageOverlay url={imagePath} bounds={bounds} />
 
-      <ZoomOnSelection detections={detections} selectedId={selectedId} />
+      <ZoomOnSelection
+        detections={detections}
+        selectedId={selectedId}
+        fullBounds={bounds}
+      />
 
       {detections.map((det) => {
         const rectBounds = toRectBounds(det);
