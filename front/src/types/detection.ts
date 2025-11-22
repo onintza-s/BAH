@@ -1,20 +1,14 @@
-export type BBox = {
-	x: number;
-	y: number;
-	w: number;
-	h: number;
+export type GeoBBox = {
+  min_lon: number;
+  min_lat: number;
+  max_lon: number;
+  max_lat: number;
 };
 
 export type Detection = {
-	id: string;
-	class: string;
-	confidence: number;
-	bbox: BBox;
-};
-
-export type ImageDetections = {
-	image_id: string;
-	width: number;
-	height: number;
-	detections: Detection[];
+  id: string;
+  file: string;
+  class: string;
+  confidence: number;
+  bbox: GeoBBox;
 };
