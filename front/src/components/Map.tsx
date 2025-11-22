@@ -1,8 +1,14 @@
-import { MapContainer, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
+import {
+  MapContainer,
+  ImageOverlay,
+  Rectangle,
+  useMap,
+} from 'react-leaflet';
 import L, { type LatLngBoundsExpression } from 'leaflet';
 import type { ImageDetections, Detection } from '../types/detection';
 import { useEffect } from 'react';
 import { getTheme } from '../theme/theme';
+import { ActivityOverlay } from './ActivityOverlay';
 
 const { palette: theme } = getTheme('dark');
 
@@ -12,6 +18,7 @@ type Props = {
   imagePath: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  showActivity: boolean;
 };
 
 function toRectBounds(det: Detection): LatLngBoundsExpression {
@@ -56,7 +63,14 @@ function ZoomOnSelection({
   return null;
 }
 
-export function Map({ data, detections, imagePath, selectedId, onSelect }: Props) {
+export function Map({
+  data,
+  detections,
+  imagePath,
+  selectedId,
+  onSelect,
+  showActivity,
+}: Props) {
   const { width, height } = data;
 
   const bounds: LatLngBoundsExpression = [
@@ -80,6 +94,8 @@ export function Map({ data, detections, imagePath, selectedId, onSelect }: Props
         fullBounds={bounds}
       />
 
+      {showActivity && <ActivityOverlay detections={detections} />}
+
       {detections.map((det) => {
         const rectBounds = toRectBounds(det);
         const isSelected = det.id === selectedId;
@@ -94,7 +110,7 @@ export function Map({ data, detections, imagePath, selectedId, onSelect }: Props
             pathOptions={{
               color: strokeColor,
               weight: isSelected ? 2 : 1,
-              fillColor: fillColor,
+              fillColor,
               fillOpacity: isSelected ? 0.22 : 0.08,
             }}
             eventHandlers={{

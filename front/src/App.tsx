@@ -17,6 +17,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const [activeType, setActiveType] = useState<DetectionTypeFilter>('all');
+  const [showActivity, setShowActivity] = useState(false);
 
   const handleSelected = (id: string) => {
     setSelectedId((current) => (current === id ? null : id));
@@ -69,6 +70,7 @@ function App() {
           imagePath={IMAGE_PATH}
           selectedId={selectedId}
           onSelect={handleSelected}
+          showActivity={showActivity}
         />
       </div>
 
@@ -79,6 +81,8 @@ function App() {
         onTypeChange={setActiveType}
         selectedId={selectedId}
         onSelect={handleSelected}
+        showActivity={showActivity}
+        onToggleActivity={setShowActivity}
       />
     </div>
   );

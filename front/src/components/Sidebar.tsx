@@ -8,6 +8,8 @@ type Props = {
   onTypeChange: (value: string | 'all') => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  showActivity: boolean;
+  onToggleActivity: (value: boolean) => void;
 };
 
 const { palette: theme } = getTheme('dark');
@@ -19,6 +21,8 @@ export function Sidebar({
   onTypeChange,
   selectedId,
   onSelect,
+  showActivity,
+  onToggleActivity,
 }: Props) {
   return (
     <div
@@ -29,7 +33,8 @@ export function Sidebar({
         background: theme.backgroundAlt,
         color: theme.foreground,
         overflowY: 'auto',
-        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily:
+          'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
       <h2
@@ -78,6 +83,23 @@ export function Sidebar({
               </option>
             ))}
           </select>
+        </label>
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: '0.8rem',
+            opacity: 0.85,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showActivity}
+            onChange={(e) => onToggleActivity(e.target.checked)}
+          />
+          High activity overlay
         </label>
 
         <p
