@@ -5,6 +5,8 @@ import type { ImageDetections, Detection } from '../types/detection';
 type Props = {
   data: ImageDetections;
   imagePath: string;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
 };
 
 function toRectBounds(det: Detection): LatLngBoundsExpression {
@@ -15,7 +17,7 @@ function toRectBounds(det: Detection): LatLngBoundsExpression {
   ];
 }
 
-export function Map({ data, imagePath }: Props) {
+export function Map({ data, imagePath, selectedId, onSelect }: Props) {
   const { width, height, detections } = data;
 
   const bounds: LatLngBoundsExpression = [
@@ -35,12 +37,19 @@ export function Map({ data, imagePath }: Props) {
 
       {detections.map((det) => {
         const rectBounds = toRectBounds(det);
+        const isSelected = det.id === selectedId;
 
         return (
           <Rectangle
             key={det.id}
             bounds={rectBounds}
-            pathOptions={{ color: 'grey', weight: 1 }}
+            pathOptions={{
+              color: isSelected ? 'red' : 'grey',
+              weight: isSelected ? 2 : 1,
+            }}
+            eventHandlers={{
+              click: () => onSelect(det.id),
+            }}
           />
         );
       })}

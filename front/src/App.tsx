@@ -7,6 +7,7 @@ const JSON_PATH = '/detections/photo_1.json';
 
 function App() {
   const [data, setData] = useState<ImageDetections | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +35,12 @@ function App() {
 
   return (
     <div style={{ height: '100vh' }}>
-      <Map data={data} imagePath={IMAGE_PATH} />
+      <Map
+        data={data}
+        imagePath={IMAGE_PATH}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+      />
     </div>
   );
 }
