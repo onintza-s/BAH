@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ImageDetections } from './types/detection';
+import type { ImageDetections, Detection } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
@@ -9,14 +9,18 @@ const JSON_PATH = '/detections/photo_1.json';
 
 const { palette } = getTheme('dark');
 
+type DetectionTypeFilter = 'all' | string;
+
 function App() {
   const [data, setData] = useState<ImageDetections | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [activeType, setActiveType] = useState<DetectionTypeFilter>('all');
+
   const handleSelected = (id: string) => {
-    setSelectedId((current) => (current === id ? null : id))
-  }
+    setSelectedId((current) => (current === id ? null : id));
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -41,6 +45,14 @@ function App() {
     return <div style={{ color: palette.foreground }}>Loading...</div>;
   }
 
+  const allTypes = Array.from(
+    new Set<string>(data.detections.map((d) => d.class)),
+  );
+
+  const filteredDetections: Detection[] = data.detections.filter((det) =>
+    activeType === 'all' ? true : det.class === activeType,
+  );
+
   return (
     <div
       style={{
@@ -53,14 +65,18 @@ function App() {
       <div style={{ flex: 4 }}>
         <Map
           data={data}
+          detections={filteredDetections}
           imagePath={IMAGE_PATH}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={handleSelected}
         />
       </div>
 
       <Sidebar
-        detections={data.detections}
+        detections={filteredDetections}
+        allTypes={allTypes}
+        activeType={activeType}
+        onTypeChange={setActiveType}
         selectedId={selectedId}
         onSelect={handleSelected}
       />

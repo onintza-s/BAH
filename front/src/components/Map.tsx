@@ -8,6 +8,7 @@ const { palette: theme } = getTheme('dark');
 
 type Props = {
   data: ImageDetections;
+  detections: Detection[];
   imagePath: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -55,8 +56,8 @@ function ZoomOnSelection({
   return null;
 }
 
-export function Map({ data, imagePath, selectedId, onSelect }: Props) {
-  const { width, height, detections } = data;
+export function Map({ data, detections, imagePath, selectedId, onSelect }: Props) {
+  const { width, height } = data;
 
   const bounds: LatLngBoundsExpression = [
     [0, 0],
