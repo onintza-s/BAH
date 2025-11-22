@@ -18,6 +18,7 @@ function App() {
 
   const [activeType, setActiveType] = useState<DetectionTypeFilter>('all');
   const [showActivity, setShowActivity] = useState(false);
+  const [minConfidence, setMinConfidence] = useState<number>(0);
 
   const handleSelected = (id: string) => {
     setSelectedId((current) => (current === id ? null : id));
@@ -50,9 +51,9 @@ function App() {
     new Set<string>(data.detections.map((d) => d.class)),
   );
 
-  const filteredDetections: Detection[] = data.detections.filter((det) =>
-    activeType === 'all' ? true : det.class === activeType,
-  );
+  const filteredDetections: Detection[] = data.detections
+    .filter((det) => (activeType === 'all' ? true : det.class === activeType))
+    .filter((det) => det.confidence >= minConfidence);
 
   return (
     <div
@@ -83,6 +84,8 @@ function App() {
         onSelect={handleSelected}
         showActivity={showActivity}
         onToggleActivity={setShowActivity}
+        minConfidence={minConfidence}
+        onConfidenceChange={setMinConfidence}
       />
     </div>
   );

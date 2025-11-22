@@ -10,6 +10,8 @@ type Props = {
   onSelect: (id: string) => void;
   showActivity: boolean;
   onToggleActivity: (value: boolean) => void;
+  minConfidence: number;
+  onConfidenceChange: (value: number) => void;
 };
 
 const { palette: theme } = getTheme('dark');
@@ -23,6 +25,8 @@ export function Sidebar({
   onSelect,
   showActivity,
   onToggleActivity,
+  minConfidence,
+  onConfidenceChange
 }: Props) {
   return (
     <div
@@ -111,6 +115,32 @@ export function Sidebar({
         >
           Tracked items: {detections.length}
         </p>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: spacing.xs,
+          fontSize: '0.8rem',
+          marginBottom: spacing.sm,
+        }}
+      >
+        <label style={{ opacity: 0.85 }}>
+          Confidence ≥ {(minConfidence * 100).toFixed(0)}%
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={minConfidence}
+            onChange={(e) => onConfidenceChange(parseFloat(e.target.value))}
+            style={{
+              width: '100%',
+              marginTop: spacing.sm,
+            }}
+          />
+        </label>
       </div>
 
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
