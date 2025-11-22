@@ -1,6 +1,7 @@
-import { MapContainer, ImageOverlay, Rectangle } from 'react-leaflet';
+import { MapContainer, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
 import L, { type LatLngBoundsExpression } from 'leaflet';
 import type { ImageDetections, Detection } from '../types/detection';
+import { useEffect } from 'react';
 
 type Props = {
   data: ImageDetections;
@@ -15,6 +16,26 @@ function toRectBounds(det: Detection): LatLngBoundsExpression {
     [y, x],
     [y + h, x + w],
   ];
+}
+
+function ZoomOnSelection({
+  detections,
+  selectedId,
+}: {
+  detections: Detection[];
+  selectedId: string | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const det = detections.find((d) => d.id === selectedId);
+    if (!det) return;
+    const b = toRectBounds(det);
+    map.fitBounds(b, { maxZoom: 2, padding: [40, 40] });
+  }, [selectedId, detections, map]);
+
+  return null;
 }
 
 export function Map({ data, imagePath, selectedId, onSelect }: Props) {
@@ -34,6 +55,8 @@ export function Map({ data, imagePath, selectedId, onSelect }: Props) {
       maxZoom={4}
     >
       <ImageOverlay url={imagePath} bounds={bounds} />
+
+      <ZoomOnSelection detections={detections} selectedId={selectedId} />
 
       {detections.map((det) => {
         const rectBounds = toRectBounds(det);
