@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import type { ImageDetections } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
+import { getTheme } from './theme/theme';
 
 const IMAGE_PATH = '/images/photo_1.jpg';
 const JSON_PATH = '/detections/photo_1.json';
+
+const { palette } = getTheme('dark');
 
 function App() {
   const [data, setData] = useState<ImageDetections | null>(null);
@@ -27,15 +30,22 @@ function App() {
   }, []);
 
   if (error) {
-    return <div>Error</div>;
+    return <div style={{ color: palette.foreground }}>Error</div>;
   }
 
   if (!data) {
-    return <div>Loading...</div>;
+    return <div style={{ color: palette.foreground }}>Loading...</div>;
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        background: palette.background,
+        color: palette.foreground,
+      }}
+    >
       <div style={{ flex: 4 }}>
         <Map
           data={data}

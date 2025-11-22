@@ -1,7 +1,10 @@
 import { MapContainer, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
 import L, { type LatLngBoundsExpression } from 'leaflet';
 import type { ImageDetections, Detection } from '../types/detection';
-import { useEffect } from 'react';
+import React from 'react';
+import { getTheme } from '../theme/theme';
+
+const { palette: theme } = getTheme('dark');
 
 type Props = {
   data: ImageDetections;
@@ -27,7 +30,7 @@ function ZoomOnSelection({
 }) {
   const map = useMap();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!selectedId) return;
     const det = detections.find((d) => d.id === selectedId);
     if (!det) return;
@@ -62,13 +65,18 @@ export function Map({ data, imagePath, selectedId, onSelect }: Props) {
         const rectBounds = toRectBounds(det);
         const isSelected = det.id === selectedId;
 
+        const strokeColor = theme.accentPrimary;
+        const fillColor = theme.accentPrimary;
+
         return (
           <Rectangle
             key={det.id}
             bounds={rectBounds}
             pathOptions={{
-              color: isSelected ? 'red' : 'grey',
+              color: strokeColor,
               weight: isSelected ? 2 : 1,
+              fillColor: fillColor,
+              fillOpacity: isSelected ? 0.22 : 0.08,
             }}
             eventHandlers={{
               click: () => onSelect(det.id),
