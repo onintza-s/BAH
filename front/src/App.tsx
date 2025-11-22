@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ImageDetections } from './types/detection';
 import { Map } from './components/Map';
+import { Sidebar } from './components/Sidebar';
 
 const IMAGE_PATH = '/images/photo_1.jpg';
 const JSON_PATH = '/detections/photo_1.json';
@@ -34,10 +35,18 @@ function App() {
   }
 
   return (
-    <div style={{ height: '100vh' }}>
-      <Map
-        data={data}
-        imagePath={IMAGE_PATH}
+    <div style={{ display: 'flex', height: '100vh' }}>
+      <div style={{ flex: 4 }}>
+        <Map
+          data={data}
+          imagePath={IMAGE_PATH}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
+      </div>
+
+      <Sidebar
+        detections={data.detections}
         selectedId={selectedId}
         onSelect={setSelectedId}
       />
