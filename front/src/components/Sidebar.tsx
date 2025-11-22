@@ -26,7 +26,7 @@ export function Sidebar({
   showActivity,
   onToggleActivity,
   minConfidence,
-  onConfidenceChange
+  onConfidenceChange,
 }: Props) {
   return (
     <div
@@ -196,7 +196,8 @@ export function Sidebar({
                   lineHeight: 1.3,
                 }}
               >
-                x={det.bbox.x}, y={det.bbox.y}, w={det.bbox.w}, h={det.bbox.h}
+                lon [{det.bbox.min_lon.toFixed(5)} – {det.bbox.max_lon.toFixed(5)}],{' '}
+                lat [{det.bbox.min_lat.toFixed(5)} – {det.bbox.max_lat.toFixed(5)}]
               </div>
             </li>
           );

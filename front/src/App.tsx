@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import type { ImageDetections, Detection } from './types/detection';
+import type { Detection } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
 
-const IMAGE_PATH = '/images/photo_1.jpg';
-const JSON_PATH = '/detections/photo_1.json';
+const DETECTIONS_PATH = '/detections/detections_15_tiles.json';
 
 const { palette } = getTheme('dark');
 
 type DetectionTypeFilter = 'all' | string;
 
 function App() {
-  const [data, setData] = useState<ImageDetections | null>(null);
+  const [detections, setDetections] = useState<Detection[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,9 +26,25 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch(JSON_PATH);
-        const json = await res.json();
-        setData(json);
+        const res = await fetch(DETECTIONS_PATH);
+        const raw = await res.json();
+
+        const mapped: Detection[] = raw
+          .filter((d: any) => d && d.bbox && d.center)
+          .map((d: any, idx: number) => ({
+            id: `${d.file}-${idx}`,
+            file: d.file,
+            class: d.label,
+            confidence: d.score,
+            bbox: {
+              min_lon: d.bbox.min_lon,
+              min_lat: d.bbox.min_lat,
+              max_lon: d.bbox.max_lon,
+              max_lat: d.bbox.max_lat,
+            },
+          }));
+
+        setDetections(mapped);
       } catch (err) {
         setError(String(err));
         console.error(err);
@@ -40,18 +55,16 @@ function App() {
   }, []);
 
   if (error) {
-    return <div style={{ color: palette.foreground }}>Error</div>;
+    return <div style={{ color: palette.foreground }}>Error: {error}</div>;
   }
 
-  if (!data) {
+  if (detections.length === 0) {
     return <div style={{ color: palette.foreground }}>Loading...</div>;
   }
 
-  const allTypes = Array.from(
-    new Set<string>(data.detections.map((d) => d.class)),
-  );
+  const allTypes = Array.from(new Set<string>(detections.map((d) => d.class)));
 
-  const filteredDetections: Detection[] = data.detections
+  const filteredDetections: Detection[] = detections
     .filter((det) => (activeType === 'all' ? true : det.class === activeType))
     .filter((det) => det.confidence >= minConfidence);
 
@@ -66,9 +79,7 @@ function App() {
     >
       <div style={{ flex: 4 }}>
         <Map
-          data={data}
           detections={filteredDetections}
-          imagePath={IMAGE_PATH}
           selectedId={selectedId}
           onSelect={handleSelected}
           showActivity={showActivity}
