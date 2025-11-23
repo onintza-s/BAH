@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import type { Detection, Tile } from './types/detection';
+import type { Detection, Tile, Metrics } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
+import { MetricsPanel } from './components/MetricsPanel';
 
 const DETECTIONS_PATH = '/detections/detections_15_tiles.json';
 const TILES_PATH = '/tiles/tiles.json';
+const METRICS_PATH = '/metrics.json';
 
 const { palette } = getTheme('dark');
 
@@ -14,6 +16,8 @@ type DetectionTypeFilter = 'all' | string;
 function App() {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [tiles, setTiles] = useState<Tile[]>([]);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +32,15 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [detRes, tileRes] = await Promise.all([
+        const [detRes, tileRes, metricsRes] = await Promise.all([
           fetch(DETECTIONS_PATH),
           fetch(TILES_PATH),
+          fetch(METRICS_PATH),
         ]);
+
+        if (!detRes.ok || !tileRes.ok) {
+          throw new Error('Failed to load detections or tiles');
+        }
 
         const rawDetections = await detRes.json();
         const rawTiles = await tileRes.json();
@@ -53,6 +62,13 @@ function App() {
 
         setDetections(mappedDetections);
         setTiles(rawTiles);
+
+        if (metricsRes.ok) {
+          const rawMetrics = await metricsRes.json();
+          setMetrics(rawMetrics as Metrics);
+        } else {
+          console.warn('metrics.json not found or failed to load');
+        }
       } catch (err) {
         setError(String(err));
         console.error(err);
@@ -85,7 +101,9 @@ function App() {
         color: palette.foreground,
       }}
     >
-      <div style={{ flex: 4 }}>
+      <div style={{ flex: 4, position: 'relative' }}>
+        {metrics && <MetricsPanel metrics={metrics} />}
+
         <Map
           tiles={tiles}
           detections={filteredDetections}

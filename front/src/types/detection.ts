@@ -18,3 +18,10 @@ export type Tile = {
   // [[minLat, minLon], [maxLat, maxLon]]
   bounds: [[number, number], [number, number]];
 };
+
+export type Metrics = {
+  num_images: number;
+  num_detections: number;
+  total_seconds: number;
+  avg_seconds_per_image: number | null;
+};
