@@ -36,48 +36,38 @@ from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from sahi.utils.cv import visualize_object_predictions
 
-torch.set_num_threads(16)        # сколько потоков внутри операторов (conv, matmul)
-torch.set_num_interop_threads(1) # сколько потоков для параллельных операторов
+torch.set_num_threads(16)        
+torch.set_num_interop_threads(1) 
 
 print("PyTorch threads:", torch.get_num_threads())
 
-# 1. Setup Model
-# Hugging face
 model_path = hf_hub_download(repo_id="pauhidalgoo/yolov8-DIOR", filename="DIOR_yolov8n_backbone.pt")
 detection_model = AutoDetectionModel.from_pretrained(
     model_type='yolov8', model_path=model_path, confidence_threshold=0.4, device="cpu"
 )
 
-
-
-# EVALUATION BLOCK.
-
-# 2. Setup Data
 folder = "rotterdam_opt"
 files = sorted(glob.glob(os.path.join(folder, "*.tif")))[:100]
 geo_detections = []
 
-# Create a storage for the raw results
 inference_cache = {}
 
-# 3. Process Loop (Inference Only)
 print(f"Starting inference on {len(files)} images...")
 
-# --- ADDITION: Start Timer ---
 start_time = time.time()
 
 for path in tqdm(files, desc="Detecting"):
-    # Open and Read
+
     src = rasterio.open(path)
     img = src.read([1, 2, 3]).transpose(1, 2, 0)
     transform = src.transform
 
-    # Normalize
+
     p2, p98 = np.percentile(img, (2, 98))
     img = np.clip((img - p2) / (p98 - p2) * 255.0, 0, 255).astype(np.uint8)
     img_contiguous = np.ascontiguousarray(img)
 
-    # Predict
+
     result = get_sliced_prediction(
         Image.fromarray(img_contiguous), detection_model,
         slice_height=512, slice_width=512, overlap_height_ratio=0.1, verbose=0
@@ -85,7 +75,6 @@ for path in tqdm(files, desc="Detecting"):
 
     inference_cache[path] = result
 
-    # Georeference results
     for det in result.object_prediction_list:
         x1, y1 = transform * (det.bbox.minx, det.bbox.miny)
         x2, y2 = transform * (det.bbox.maxx, det.bbox.maxy)
@@ -105,14 +94,8 @@ total_inference_time = end_time - start_time
 print(f"Done! Saved {len(geo_detections)} detections.")
 print(f"Total inference time to be submitted to evaluators: {total_inference_time:.2f} seconds")
 
-# === Single tile interactive map ===
-# Берем один файл (первый)
-# === Multi-tile interactive map ===
-
-# Сколько тайлов показывать (можешь увеличить, если ок по производительности)
 subset_paths = files[:1]
 
-# Берём первый файл, чтобы задать центр карты
 with rasterio.open(subset_paths[0]) as src0:
     source_crs = src0.crs
     dst_crs = 'EPSG:4326'
@@ -146,11 +129,9 @@ for i, tiff_path in enumerate(subset_paths):
 
         img_data = np.moveaxis(destination, 0, -1)
 
-        # Простейшее растяжение контраста (как у тебя)
         scaled_data = (img_data.astype(np.float32) - 23) * 255.0 / (150 - 23)
         scaled_data = np.clip(scaled_data, 0, 255).astype(np.uint8)
 
-        # Маска по nodata
         mask = (destination[0] == nodata_val)
         alpha = np.where(mask, 0, 255).astype(np.uint8)
 
@@ -177,7 +158,6 @@ for i, tiff_path in enumerate(subset_paths):
             opacity=0.9,
         ).add_to(m)
 
-# --- Детекции только по выбранным тайлам ---
 subset_files = {os.path.basename(p) for p in subset_paths}
 
 gdf = gpd.GeoDataFrame(
