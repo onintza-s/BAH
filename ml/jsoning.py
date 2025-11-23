@@ -45,7 +45,7 @@ detection_model = AutoDetectionModel.from_pretrained(
 # EVALUATION BLOCK.
 
 # 2. Setup Data
-folder = "rotterdam_opt"
+folder = "raw_tifs"
 files = sorted(glob.glob(os.path.join(folder, "*.tif")))[:15]  # <-- 15 файлов
 print("Используем файлы:")
 for f in files:
@@ -140,3 +140,13 @@ with open(output_json, "w", encoding="utf-8") as f:
     json.dump(detections_for_json, f, ensure_ascii=False, indent=2)
 
 print(f"Saved JSON to {output_json}")
+
+FRONT_DET_DIR = Path(__file__).resolve().parents[1] / "front" / "public" / "detections"
+FRONT_DET_DIR.mkdir(parents=True, exist_ok=True)
+
+front_output_path = FRONT_DET_DIR / "detections_15_tiles.json"
+
+with open(front_output_path, "w", encoding="utf-8") as f:
+    json.dump(detections_for_json, f, ensure_ascii=False, indent=2)
+
+print(f"[FRONT] Saved detections to {front_output_path}")
