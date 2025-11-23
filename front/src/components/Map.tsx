@@ -6,7 +6,7 @@ import {
   useMap,
 } from 'react-leaflet';
 import type { LatLngBoundsExpression } from 'leaflet';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Detection, Tile } from '../types/detection';
 import { getTheme } from '../theme/theme';
 import { ActivityOverlay } from './ActivityOverlay';
@@ -52,58 +52,20 @@ function tilesBounds(tiles: Tile[]): LatLngBoundsExpression | null {
   ];
 }
 
-function detectionsBounds(detections: Detection[]): LatLngBoundsExpression | null {
-  if (detections.length === 0) return null;
-
-  const lats: number[] = [];
-  const lons: number[] = [];
-
-  detections.forEach((d) => {
-    lats.push(d.bbox.min_lat, d.bbox.max_lat);
-    lons.push(d.bbox.min_lon, d.bbox.max_lon);
-  });
-
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons);
-  const maxLon = Math.max(...lons);
-
-  return [
-    [minLat, minLon],
-    [maxLat, maxLon],
-  ];
-}
-
-function computeMapBounds(
-  detections: Detection[],
-  tiles: Tile[],
-): LatLngBoundsExpression {
-  const detBounds = detectionsBounds(detections);
-  const tileBounds = tilesBounds(tiles);
-
-  if (detBounds) return detBounds;
-  if (tileBounds) return tileBounds;
-
-  return [
-    [51.88, 4.33],
-    [51.90, 4.36],
-  ];
-}
-
 function ZoomOnSelection({
   detections,
   selectedId,
-  fullBounds,
+  tilesBounds,
 }: {
   detections: Detection[];
   selectedId: string | null;
-  fullBounds: LatLngBoundsExpression;
+  tilesBounds: LatLngBoundsExpression;
 }) {
   const map = useMap();
 
   useEffect(() => {
     if (!selectedId) {
-      map.fitBounds(fullBounds, { padding: [20, 20] });
+      map.fitBounds(tilesBounds, { padding: [30, 30] });
       return;
     }
 
@@ -111,7 +73,7 @@ function ZoomOnSelection({
     if (!det) return;
 
     map.fitBounds(detectionBounds(det), { padding: [40, 40] });
-  }, [selectedId, detections, fullBounds, map]);
+  }, [selectedId, map, tilesBounds]);
 
   return null;
 }
@@ -123,7 +85,14 @@ export function Map({
   onSelect,
   showActivity,
 }: Props) {
-  const bounds = computeMapBounds(detections, tiles);
+  const bounds = useMemo(
+    () =>
+    (tilesBounds(tiles) ?? ([
+      [51.88, 4.33],
+      [51.90, 4.36],
+    ] as LatLngBoundsExpression)),
+    [tiles]
+  );
 
   return (
     <MapContainer
@@ -152,7 +121,7 @@ export function Map({
       <ZoomOnSelection
         detections={detections}
         selectedId={selectedId}
-        fullBounds={bounds}
+        tilesBounds={bounds}
       />
 
       {showActivity && <ActivityOverlay detections={detections} />}
