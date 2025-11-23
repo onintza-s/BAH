@@ -12,6 +12,7 @@ type Props = {
   onToggleActivity: (value: boolean) => void;
   minConfidence: number;
   onConfidenceChange: (value: number) => void;
+  onExportPdf: () => void;
 };
 
 const { palette: theme } = getTheme('dark');
@@ -27,6 +28,7 @@ export function Sidebar({
   onToggleActivity,
   minConfidence,
   onConfidenceChange,
+  onExportPdf
 }: Props) {
   return (
     <div
@@ -141,6 +143,31 @@ export function Sidebar({
             }}
           />
         </label>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+          marginTop: spacing.sm,
+        }}
+      >
+        <button
+          onClick={onExportPdf}
+          style={{
+            flex: 1,
+            padding: '6px 8px',
+            borderRadius: radius.sm,
+            border: `1px solid ${theme.accentPrimary}`,
+            background: `${theme.accentPrimary}20`,
+            color: theme.foreground,
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+          }}
+        >
+          Export current view to PDF
+        </button>
       </div>
 
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>

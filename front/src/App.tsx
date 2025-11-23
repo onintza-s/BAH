@@ -4,6 +4,7 @@ import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
 import { MetricsPanel } from './components/MetricsPanel';
+import { exportDetectionsPdf } from './utils/exportPdf';
 
 const DETECTIONS_PATH = '/detections/detections_15_tiles.json';
 const TILES_PATH = '/tiles/tiles.json';
@@ -27,6 +28,10 @@ function App() {
 
   const handleSelected = (id: string) => {
     setSelectedId((current) => (current === id ? null : id));
+  };
+
+  const handleExportPdf = () => {
+    exportDetectionsPdf(filteredDetections, metrics);
   };
 
   useEffect(() => {
@@ -124,6 +129,7 @@ function App() {
         onToggleActivity={setShowActivity}
         minConfidence={minConfidence}
         onConfidenceChange={setMinConfidence}
+        onExportPdf={handleExportPdf}
       />
     </div>
   );
