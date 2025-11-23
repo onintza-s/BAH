@@ -34,7 +34,7 @@ export const palette: Record<Mode, Palette> = {
     foregroundMuted: '#8A8C96',
     accentPrimary: '#7DEFFF',
     accentSecondary: '#FF6B7A',
-    border: '#2A2A35',
+    border: '#404054',
     overlay: '#000000',
   },
   light: {

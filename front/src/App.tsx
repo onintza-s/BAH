@@ -104,6 +104,7 @@ function App() {
         height: '100vh',
         background: palette.background,
         color: palette.foreground,
+        fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
       <div style={{ flex: 4, position: 'relative' }}>

@@ -17,6 +17,18 @@ type Props = {
 
 const { palette: theme } = getTheme('dark');
 
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: '0.75rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: theme.foreground,
+};
+
+const mutedLabelStyle: React.CSSProperties = {
+  opacity: 0.85,
+  color: theme.foregroundMuted,
+};
+
 export function Sidebar({
   detections,
   allTypes,
@@ -39,38 +51,84 @@ export function Sidebar({
         borderLeft: `1px solid ${theme.border}`,
         background: theme.backgroundAlt,
         color: theme.foreground,
-        fontFamily:
-          'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
       <div
         style={{
           padding: `${spacing.md}px`,
           borderBottom: `1px solid ${theme.border}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing.sm,
         }}
       >
-        <h2
+        <div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: theme.foreground,
+            }}
+          >
+            Detections
+          </h2>
+          <p
+            style={{
+              margin: `${spacing.xs}px 0 0 0`,
+              fontSize: '0.8rem',
+              color: theme.foregroundMuted,
+            }}
+          >
+            Tracked items: {detections.length}
+          </p>
+        </div>
+
+        <button
+          onClick={onExportPdf}
+          title="Export current view"
           style={{
-            margin: '0 0 0.75rem 0',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: theme.foregroundMuted,
+            borderRadius: radius.round,
+            border: `1px solid ${theme.accentPrimary}80`,
+            background: `${theme.accentPrimary}10`,
+            color: theme.foreground,
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            cursor: 'pointer',
+            outline: 'none',
+            transition:
+              'background 0.15s ease, border-color 0.15s ease, transform 0.08s',
           }}
         >
-          Detections
-        </h2>
+          <span>Export</span>
+        </button>
+      </div>
 
+      <div
+        style={{
+          padding: `${spacing.md}px`,
+          borderBottom: `1px solid ${theme.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: spacing.md,
+          fontSize: '0.8rem',
+        }}
+      >
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: spacing.sm,
-            fontSize: '0.8rem',
-            marginBottom: spacing.sm,
           }}
         >
+          <div style={sectionTitleStyle}>Filters</div>
+
           <label
             style={{
               display: 'flex',
@@ -78,7 +136,7 @@ export function Sidebar({
               gap: 4,
             }}
           >
-            <span style={{ opacity: 0.8 }}>Type</span>
+            <span style={mutedLabelStyle}>Object type</span>
             <select
               value={activeType}
               onChange={(e) =>
@@ -94,7 +152,7 @@ export function Sidebar({
                 outline: 'none',
               }}
             >
-              <option value="all">All</option>
+              <option value="all">All types</option>
               {allTypes.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -107,14 +165,31 @@ export function Sidebar({
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: 4,
-              fontSize: '0.8rem',
-              opacity: 0.9,
+              gap: 6,
             }}
           >
-            <span>
-              Confidence ≥ {(minConfidence * 100).toFixed(0)}%
-            </span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={mutedLabelStyle}>Min confidence</span>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.7rem',
+                  padding: '2px 6px',
+                  borderRadius: radius.round,
+                  border: `1px solid ${theme.border}`,
+                  background: theme.background,
+                  color: theme.foregroundMuted,
+                }}
+              >
+                ≥ {(minConfidence * 100).toFixed(0)}%
+              </span>
+            </div>
             <input
               type="range"
               min={0}
@@ -124,63 +199,71 @@ export function Sidebar({
               onChange={(e) => onConfidenceChange(parseFloat(e.target.value))}
               style={{
                 width: '100%',
+                WebkitAppearance: 'none',
+                height: 4,
+                borderRadius: 2,
+                background: theme.border,
+                outline: 'none',
+                cursor: 'pointer',
+                accentColor: theme.accentPrimary,
               }}
             />
           </label>
-
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: '0.8rem',
-              opacity: 0.85,
-              marginTop: spacing.xs,
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={showActivity}
-              onChange={(e) => onToggleActivity(e.target.checked)}
-            />
-            High activity overlay
-          </label>
-
-          <p
-            style={{
-              color: theme.foregroundMuted,
-              fontSize: '0.8rem',
-              margin: `${spacing.xs}px 0 0 0`,
-            }}
-          >
-            Tracked items: {detections.length}
-          </p>
         </div>
 
         <div
           style={{
             display: 'flex',
+            flexDirection: 'column',
             gap: spacing.sm,
-            marginTop: spacing.sm,
           }}
         >
-          <button
-            onClick={onExportPdf}
+          <div style={sectionTitleStyle}>Display</div>
+
+          <div
             style={{
-              flex: 1,
-              padding: '6px 8px',
-              borderRadius: radius.sm,
-              border: `1px solid ${theme.accentPrimary}`,
-              background: `${theme.accentPrimary}20`,
-              color: theme.foreground,
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'background 0.15s ease, border-color 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.sm,
             }}
           >
-            Export current view
-          </button>
+            <span style={{ opacity: 0.9, color: theme.foregroundMuted }}>
+              High activity overlay
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onToggleActivity(!showActivity)}
+              style={{
+                width: 38,
+                height: 20,
+                borderRadius: 999,
+                border: `1px solid ${theme.accentPrimary}90`,
+                background: showActivity
+                  ? `${theme.accentPrimary}20`
+                  : theme.background,
+                padding: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: showActivity ? 'flex-end' : 'flex-start',
+                cursor: 'pointer',
+                outline: 'none',
+                transition:
+                  'background 0.15s ease, border-color 0.15s ease, justify-content 0.15s ease',
+              }}
+            >
+              <span
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: '999px',
+                  background: `${theme.accentPrimary}90`,
+                  boxShadow: '0 0 4px rgba(0,0,0,0.6)',
+                }}
+              />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -211,7 +294,7 @@ export function Sidebar({
                   padding: `${spacing.sm}px ${spacing.md}px`,
                   marginBottom: `${spacing.sm}px`,
                   cursor: 'pointer',
-                  borderRadius: `${radius.sm}px`,
+                  borderRadius: radius.sm,
                   background,
                   border: `1px solid ${borderColor}`,
                   transition:
@@ -242,6 +325,7 @@ export function Sidebar({
                     fontSize: '0.75rem',
                     opacity: 0.6,
                     lineHeight: 1.3,
+                    fontFamily: 'JetBrains Mono, monospace',
                   }}
                 >
                   lon [{det.bbox.min_lon.toFixed(5)} –{' '}
@@ -254,6 +338,6 @@ export function Sidebar({
           })}
         </ul>
       </div>
-    </div>
+    </div >
   );
 }

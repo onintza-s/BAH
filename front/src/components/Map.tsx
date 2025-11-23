@@ -135,10 +135,10 @@ export function Map({
             key={det.id}
             bounds={rectBounds}
             pathOptions={{
-              color: theme.accentPrimary,
-              weight: isSelected ? 2 : 1,
+              color: isSelected ? theme.accentSecondary : theme.accentPrimary,
+              weight: isSelected ? 3 : 1,
               fillColor: theme.accentPrimary,
-              fillOpacity: isSelected ? 0.22 : 0.08,
+              fillOpacity: isSelected ? 0.32 : 0.08,
             }}
             eventHandlers={{
               click: () => onSelect(det.id),
