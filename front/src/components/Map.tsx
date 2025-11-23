@@ -2,17 +2,19 @@ import {
   MapContainer,
   TileLayer,
   Rectangle,
+  ImageOverlay,
   useMap,
 } from 'react-leaflet';
 import type { LatLngBoundsExpression } from 'leaflet';
 import { useEffect } from 'react';
-import type { Detection } from '../types/detection';
+import type { Detection, Tile } from '../types/detection';
 import { getTheme } from '../theme/theme';
 import { ActivityOverlay } from './ActivityOverlay';
 
 const { palette: theme } = getTheme('dark');
 
 type Props = {
+  tiles: Tile[];
   detections: Detection[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -27,7 +29,32 @@ function detectionBounds(det: Detection): LatLngBoundsExpression {
   ];
 }
 
-function allDetectionsBounds(detections: Detection[]): LatLngBoundsExpression {
+function tilesBounds(tiles: Tile[]): LatLngBoundsExpression | null {
+  if (tiles.length === 0) return null;
+
+  const lats: number[] = [];
+  const lons: number[] = [];
+
+  tiles.forEach((t) => {
+    const [[minLat, minLon], [maxLat, maxLon]] = t.bounds;
+    lats.push(minLat, maxLat);
+    lons.push(minLon, maxLon);
+  });
+
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+
+  return [
+    [minLat, minLon],
+    [maxLat, maxLon],
+  ];
+}
+
+function detectionsBounds(detections: Detection[]): LatLngBoundsExpression | null {
+  if (detections.length === 0) return null;
+
   const lats: number[] = [];
   const lons: number[] = [];
 
@@ -44,6 +71,22 @@ function allDetectionsBounds(detections: Detection[]): LatLngBoundsExpression {
   return [
     [minLat, minLon],
     [maxLat, maxLon],
+  ];
+}
+
+function computeMapBounds(
+  detections: Detection[],
+  tiles: Tile[],
+): LatLngBoundsExpression {
+  const detBounds = detectionsBounds(detections);
+  const tileBounds = tilesBounds(tiles);
+
+  if (detBounds) return detBounds;
+  if (tileBounds) return tileBounds;
+
+  return [
+    [51.88, 4.33],
+    [51.90, 4.36],
   ];
 }
 
@@ -74,12 +117,13 @@ function ZoomOnSelection({
 }
 
 export function Map({
+  tiles,
   detections,
   selectedId,
   onSelect,
   showActivity,
 }: Props) {
-  const bounds = allDetectionsBounds(detections);
+  const bounds = computeMapBounds(detections, tiles);
 
   return (
     <MapContainer
@@ -87,7 +131,7 @@ export function Map({
       style={{ height: '100%', width: '100%' }}
       zoom={16}
       minZoom={10}
-      maxZoom={19}
+      maxZoom={18}
       scrollWheelZoom
       attributionControl={false}
     >
@@ -95,6 +139,15 @@ export function Map({
         attribution='&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
       />
+
+      {tiles.map((tile) => (
+        <ImageOverlay
+          key={tile.file}
+          url={`/tiles/${tile.file}`}
+          bounds={tile.bounds as LatLngBoundsExpression}
+          opacity={0.9}
+        />
+      ))}
 
       <ZoomOnSelection
         detections={detections}
@@ -124,6 +177,6 @@ export function Map({
           />
         );
       })}
-    </ MapContainer>
+    </MapContainer>
   );
 }

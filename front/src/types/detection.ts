@@ -12,3 +12,9 @@ export type Detection = {
   confidence: number;
   bbox: GeoBBox;
 };
+
+export type Tile = {
+  file: string;
+  // [[minLat, minLon], [maxLat, maxLon]]
+  bounds: [[number, number], [number, number]];
+};

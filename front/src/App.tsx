@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import type { Detection } from './types/detection';
+import type { Detection, Tile } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
 
 const DETECTIONS_PATH = '/detections/detections_15_tiles.json';
+const TILES_PATH = '/tiles/tiles.json';
 
 const { palette } = getTheme('dark');
 
@@ -12,6 +13,7 @@ type DetectionTypeFilter = 'all' | string;
 
 function App() {
   const [detections, setDetections] = useState<Detection[]>([]);
+  const [tiles, setTiles] = useState<Tile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,10 +28,15 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch(DETECTIONS_PATH);
-        const raw = await res.json();
+        const [detRes, tileRes] = await Promise.all([
+          fetch(DETECTIONS_PATH),
+          fetch(TILES_PATH),
+        ]);
 
-        const mapped: Detection[] = raw
+        const rawDetections = await detRes.json();
+        const rawTiles = await tileRes.json();
+
+        const mappedDetections: Detection[] = rawDetections
           .filter((d: any) => d && d.bbox && d.center)
           .map((d: any, idx: number) => ({
             id: `${d.file}-${idx}`,
@@ -44,7 +51,8 @@ function App() {
             },
           }));
 
-        setDetections(mapped);
+        setDetections(mappedDetections);
+        setTiles(rawTiles);
       } catch (err) {
         setError(String(err));
         console.error(err);
@@ -58,7 +66,7 @@ function App() {
     return <div style={{ color: palette.foreground }}>Error: {error}</div>;
   }
 
-  if (detections.length === 0) {
+  if (detections.length === 0 || tiles.length === 0) {
     return <div style={{ color: palette.foreground }}>Loading...</div>;
   }
 
@@ -79,6 +87,7 @@ function App() {
     >
       <div style={{ flex: 4 }}>
         <Map
+          tiles={tiles}
           detections={filteredDetections}
           selectedId={selectedId}
           onSelect={handleSelected}
