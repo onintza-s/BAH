@@ -39,17 +39,41 @@ for fname in tif_files:
             resampling=Resampling.bilinear,
         )
 
-        rgb = destination[:3]
-        rgb = np.moveaxis(rgb, 0, -1)
+        nodata = src.nodata
 
-        p2, p98 = np.percentile(rgb, (2, 98))
-        rgb = np.clip((rgb - p2) / (p98 - p2) * 255.0, 0, 255).astype(np.uint8)
+        if nodata is not None:
+            nodata_mask = destination[0] == nodata
+        else:
+            nodata_mask = (
+                (destination[0] == 0)
+                & (destination[1] == 0)
+                & (destination[2] == 0)
+            )
 
-        img = Image.fromarray(rgb, "RGB")
+        # RGB as floa
+        rgb = destination[:3].astype(np.float32) # (3, H, W)
+        rgb = np.moveaxis(rgb, 0, -1) # (H, W, 3)
+
+        valid_pixels = rgb[~nodata_mask]
+
+        if valid_pixels.size > 0:
+            p2, p98 = np.percentile(valid_pixels, (2, 98))
+            rgb = np.clip((rgb - p2) / (p98 - p2) * 255.0, 0, 255)
+        else:
+            rgb = np.clip(rgb, 0, 255)
+
+        rgb_uint8 = rgb.astype(np.uint8)
+
+        alpha = np.where(nodata_mask, 0, 255).astype(np.uint8)
+
+        rgba = np.dstack((rgb_uint8, alpha)) # (H, W, 4)
+
+        img = Image.fromarray(rgba, "RGBA")
         out_name = fname.replace(".tif", ".png")
         out_path = os.path.join(OUTPUT_FOLDER, out_name)
         img.save(out_path, "PNG")
 
+        # bounds in EPSG:4326
         left, bottom, right, top = array_bounds(height, width, transform)
         bounds = [[float(bottom), float(left)], [float(top), float(right)]]
 
