@@ -1,117 +1,144 @@
 import {
   MapContainer,
-  ImageOverlay,
+  TileLayer,
   Rectangle,
+  ImageOverlay,
   useMap,
 } from 'react-leaflet';
-import L, { type LatLngBoundsExpression } from 'leaflet';
-import type { ImageDetections, Detection } from '../types/detection';
-import { useEffect } from 'react';
+import type { LatLngBoundsExpression } from 'leaflet';
+import { useEffect, useMemo } from 'react';
+import type { Detection, Tile } from '../types/detection';
 import { getTheme } from '../theme/theme';
 import { ActivityOverlay } from './ActivityOverlay';
 
 const { palette: theme } = getTheme('dark');
 
 type Props = {
-  data: ImageDetections;
+  tiles: Tile[];
   detections: Detection[];
-  imagePath: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
   showActivity: boolean;
 };
 
-function toRectBounds(det: Detection): LatLngBoundsExpression {
-  const { x, y, w, h } = det.bbox;
+function detectionBounds(det: Detection): LatLngBoundsExpression {
+  const { min_lat, min_lon, max_lat, max_lon } = det.bbox;
   return [
-    [y, x],
-    [y + h, x + w],
+    [min_lat, min_lon],
+    [max_lat, max_lon],
+  ];
+}
+
+function tilesBounds(tiles: Tile[]): LatLngBoundsExpression | null {
+  if (tiles.length === 0) return null;
+
+  const lats: number[] = [];
+  const lons: number[] = [];
+
+  tiles.forEach((t) => {
+    const [[minLat, minLon], [maxLat, maxLon]] = t.bounds;
+    lats.push(minLat, maxLat);
+    lons.push(minLon, maxLon);
+  });
+
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+
+  return [
+    [minLat, minLon],
+    [maxLat, maxLon],
   ];
 }
 
 function ZoomOnSelection({
   detections,
   selectedId,
-  fullBounds,
+  tilesBounds,
 }: {
   detections: Detection[];
   selectedId: string | null;
-  fullBounds: LatLngBoundsExpression;
+  tilesBounds: LatLngBoundsExpression;
 }) {
   const map = useMap();
 
   useEffect(() => {
     if (!selectedId) {
-      map.fitBounds(fullBounds, {
-        maxZoom: -1,
-        padding: [20, 20],
-      });
+      map.fitBounds(tilesBounds, { padding: [30, 30] });
       return;
     }
 
     const det = detections.find((d) => d.id === selectedId);
     if (!det) return;
 
-    const b = toRectBounds(det);
-
-    map.fitBounds(b, {
-      maxZoom: 2,
-      padding: [40, 40],
-    });
-  }, [selectedId, detections, fullBounds, map]);
+    map.fitBounds(detectionBounds(det), { padding: [40, 40] });
+  }, [selectedId, map, tilesBounds]);
 
   return null;
 }
 
 export function Map({
-  data,
+  tiles,
   detections,
-  imagePath,
   selectedId,
   onSelect,
   showActivity,
 }: Props) {
-  const { width, height } = data;
-
-  const bounds: LatLngBoundsExpression = [
-    [0, 0],
-    [height, width],
-  ];
+  const bounds = useMemo(
+    () =>
+    (tilesBounds(tiles) ?? ([
+      [51.88, 4.33],
+      [51.90, 4.36],
+    ] as LatLngBoundsExpression)),
+    [tiles]
+  );
 
   return (
     <MapContainer
-      crs={L.CRS.Simple}
       bounds={bounds}
       style={{ height: '100%', width: '100%' }}
-      minZoom={-2}
-      maxZoom={4}
+      zoom={16}
+      minZoom={10}
+      maxZoom={18}
+      scrollWheelZoom
+      attributionControl={false}
     >
-      <ImageOverlay url={imagePath} bounds={bounds} />
+      <TileLayer
+        attribution='&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      />
+
+      {tiles.map((tile) => (
+        <ImageOverlay
+          key={tile.file}
+          url={`/tiles/${tile.file}`}
+          bounds={tile.bounds as LatLngBoundsExpression}
+          opacity={0.9}
+        />
+      ))}
 
       <ZoomOnSelection
         detections={detections}
         selectedId={selectedId}
-        fullBounds={bounds}
+        tilesBounds={bounds}
       />
 
       {showActivity && <ActivityOverlay detections={detections} />}
 
       {detections.map((det) => {
-        const rectBounds = toRectBounds(det);
+        const rectBounds = detectionBounds(det);
         const isSelected = det.id === selectedId;
-
-        const strokeColor = theme.accentPrimary;
-        const fillColor = theme.accentPrimary;
 
         return (
           <Rectangle
             key={det.id}
             bounds={rectBounds}
             pathOptions={{
-              color: strokeColor,
-              weight: isSelected ? 2 : 1,
-              fillColor,
-              fillOpacity: isSelected ? 0.22 : 0.08,
+              color: isSelected ? theme.accentSecondary : theme.accentPrimary,
+              weight: isSelected ? 3 : 1,
+              fillColor: theme.accentPrimary,
+              fillOpacity: isSelected ? 0.32 : 0.08,
             }}
             eventHandlers={{
               click: () => onSelect(det.id),

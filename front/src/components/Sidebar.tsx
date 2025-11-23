@@ -12,9 +12,22 @@ type Props = {
   onToggleActivity: (value: boolean) => void;
   minConfidence: number;
   onConfidenceChange: (value: number) => void;
+  onExportPdf: () => void;
 };
 
 const { palette: theme } = getTheme('dark');
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: '0.75rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: theme.foreground,
+};
+
+const mutedLabelStyle: React.CSSProperties = {
+  opacity: 0.85,
+  color: theme.foregroundMuted,
+};
 
 export function Sidebar({
   detections,
@@ -26,182 +39,305 @@ export function Sidebar({
   showActivity,
   onToggleActivity,
   minConfidence,
-  onConfidenceChange
+  onConfidenceChange,
+  onExportPdf,
 }: Props) {
   return (
     <div
       style={{
         flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
         borderLeft: `1px solid ${theme.border}`,
-        padding: `${spacing.md}px`,
         background: theme.backgroundAlt,
         color: theme.foreground,
-        overflowY: 'auto',
-        fontFamily:
-          'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
-      <h2
-        style={{
-          margin: '0 0 1rem 0',
-          fontSize: '0.95rem',
-          fontWeight: 500,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          color: theme.foregroundMuted,
-        }}
-      >
-        Detections
-      </h2>
-
       <div
         style={{
-          marginBottom: spacing.md,
+          padding: `${spacing.md}px`,
+          borderBottom: `1px solid ${theme.border}`,
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           gap: spacing.sm,
-          fontSize: '0.8rem',
         }}
       >
-        <label>
-          Type:{' '}
-          <select
-            value={activeType}
-            onChange={(e) =>
-              onTypeChange(e.target.value === 'all' ? 'all' : e.target.value)
-            }
+        <div>
+          <h2
             style={{
-              marginLeft: 4,
-              background: theme.background,
+              margin: 0,
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
               color: theme.foreground,
-              borderRadius: radius.sm,
-              border: `1px solid ${theme.border}`,
-              fontSize: '0.8rem',
-              padding: '2px 6px',
             }}
           >
-            <option value="all">All</option>
-            {allTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+            Detections
+          </h2>
+          <p
+            style={{
+              margin: `${spacing.xs}px 0 0 0`,
+              fontSize: '0.8rem',
+              color: theme.foregroundMuted,
+            }}
+          >
+            Tracked items: {detections.length}
+          </p>
+        </div>
 
-        <label
+        <button
+          onClick={onExportPdf}
+          title="Export current view"
           style={{
+            borderRadius: radius.round,
+            border: `1px solid ${theme.accentPrimary}80`,
+            background: `${theme.accentPrimary}10`,
+            color: theme.foreground,
+            padding: '4px 10px',
+            fontSize: '0.75rem',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: '0.8rem',
-            opacity: 0.85,
+            cursor: 'pointer',
+            outline: 'none',
+            transition:
+              'background 0.15s ease, border-color 0.15s ease, transform 0.08s',
           }}
         >
-          <input
-            type="checkbox"
-            checked={showActivity}
-            onChange={(e) => onToggleActivity(e.target.checked)}
-          />
-          High activity overlay
-        </label>
-
-        <p
-          style={{
-            color: theme.foreground,
-            fontSize: '0.8rem',
-            margin: 0,
-          }}
-        >
-          Tracked items: {detections.length}
-        </p>
+          <span>Export</span>
+        </button>
       </div>
 
       <div
         style={{
+          padding: `${spacing.md}px`,
+          borderBottom: `1px solid ${theme.border}`,
           display: 'flex',
           flexDirection: 'column',
-          gap: spacing.xs,
+          gap: spacing.md,
           fontSize: '0.8rem',
-          marginBottom: spacing.sm,
         }}
       >
-        <label style={{ opacity: 0.85 }}>
-          Confidence ≥ {(minConfidence * 100).toFixed(0)}%
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={minConfidence}
-            onChange={(e) => onConfidenceChange(parseFloat(e.target.value))}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing.sm,
+          }}
+        >
+          <div style={sectionTitleStyle}>Filters</div>
+
+          <label
             style={{
-              width: '100%',
-              marginTop: spacing.sm,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
             }}
-          />
-        </label>
-      </div>
-
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {detections.map((det) => {
-          const isSelected = det.id === selectedId;
-
-          const background = isSelected
-            ? `${theme.accentPrimary}20`
-            : 'transparent';
-
-          const borderColor = isSelected
-            ? theme.accentPrimary
-            : `${theme.accentPrimary}33`;
-
-          return (
-            <li
-              key={det.id}
-              onClick={() => onSelect(det.id)}
+          >
+            <span style={mutedLabelStyle}>Object type</span>
+            <select
+              value={activeType}
+              onChange={(e) =>
+                onTypeChange(e.target.value === 'all' ? 'all' : e.target.value)
+              }
               style={{
-                padding: `${spacing.sm}px ${spacing.md}px`,
-                marginBottom: `${spacing.sm}px`,
-                cursor: 'pointer',
-                borderRadius: `${radius.sm}px`,
-                background,
-                border: `1px solid ${borderColor}`,
-                transition:
-                  'background 0.12s ease-out, border 0.12s ease-out, transform 0.08s',
+                background: theme.background,
+                color: theme.foreground,
+                borderRadius: radius.sm,
+                border: `1px solid ${theme.border}`,
+                fontSize: '0.8rem',
+                padding: '4px 6px',
+                outline: 'none',
               }}
             >
-              <div
+              <option value="all">All types</option>
+              {allTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={mutedLabelStyle}>Min confidence</span>
+              <span
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: 4,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.7rem',
+                  padding: '2px 6px',
+                  borderRadius: radius.round,
+                  border: `1px solid ${theme.border}`,
+                  background: theme.background,
+                  color: theme.foregroundMuted,
                 }}
               >
-                <span style={{ fontWeight: 600 }}>{det.class}</span>
-                <span
+                ≥ {(minConfidence * 100).toFixed(0)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={minConfidence}
+              onChange={(e) => onConfidenceChange(parseFloat(e.target.value))}
+              style={{
+                width: '100%',
+                WebkitAppearance: 'none',
+                height: 4,
+                borderRadius: 2,
+                background: theme.border,
+                outline: 'none',
+                cursor: 'pointer',
+                accentColor: theme.accentPrimary,
+              }}
+            />
+          </label>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing.sm,
+          }}
+        >
+          <div style={sectionTitleStyle}>Display</div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.sm,
+            }}
+          >
+            <span style={{ opacity: 0.9, color: theme.foregroundMuted }}>
+              High activity overlay
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onToggleActivity(!showActivity)}
+              style={{
+                width: 38,
+                height: 20,
+                borderRadius: 999,
+                border: `1px solid ${theme.accentPrimary}90`,
+                background: showActivity
+                  ? `${theme.accentPrimary}20`
+                  : theme.background,
+                padding: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: showActivity ? 'flex-end' : 'flex-start',
+                cursor: 'pointer',
+                outline: 'none',
+                transition:
+                  'background 0.15s ease, border-color 0.15s ease, justify-content 0.15s ease',
+              }}
+            >
+              <span
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: '999px',
+                  background: `${theme.accentPrimary}90`,
+                  boxShadow: '0 0 4px rgba(0,0,0,0.6)',
+                }}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: `${spacing.md}px`,
+        }}
+      >
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {detections.map((det) => {
+            const isSelected = det.id === selectedId;
+
+            const background = isSelected
+              ? `${theme.accentPrimary}20`
+              : 'transparent';
+
+            const borderColor = isSelected
+              ? theme.accentPrimary
+              : `${theme.accentPrimary}33`;
+
+            return (
+              <li
+                key={det.id}
+                onClick={() => onSelect(det.id)}
+                style={{
+                  padding: `${spacing.sm}px ${spacing.md}px`,
+                  marginBottom: `${spacing.sm}px`,
+                  cursor: 'pointer',
+                  borderRadius: radius.sm,
+                  background,
+                  border: `1px solid ${borderColor}`,
+                  transition:
+                    'background 0.12s ease-out, border 0.12s ease-out, transform 0.08s',
+                }}
+              >
+                <div
                   style={{
-                    opacity: 0.7,
-                    fontSize: '0.8rem',
-                    color: theme.foregroundMuted,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: 4,
                   }}
                 >
-                  {(det.confidence * 100).toFixed(1)}%
-                </span>
-              </div>
+                  <span style={{ fontWeight: 600 }}>{det.class}</span>
+                  <span
+                    style={{
+                      opacity: 0.7,
+                      fontSize: '0.8rem',
+                      color: theme.foregroundMuted,
+                    }}
+                  >
+                    {(det.confidence * 100).toFixed(1)}%
+                  </span>
+                </div>
 
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  opacity: 0.6,
-                  lineHeight: 1.3,
-                }}
-              >
-                x={det.bbox.x}, y={det.bbox.y}, w={det.bbox.w}, h={det.bbox.h}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    opacity: 0.6,
+                    lineHeight: 1.3,
+                    fontFamily: 'JetBrains Mono, monospace',
+                  }}
+                >
+                  lon [{det.bbox.min_lon.toFixed(5)} –{' '}
+                  {det.bbox.max_lon.toFixed(5)}], lat [
+                  {det.bbox.min_lat.toFixed(5)} –{' '}
+                  {det.bbox.max_lat.toFixed(5)}]
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div >
   );
 }

@@ -14,13 +14,13 @@ export function ActivityOverlay({ detections }: Props) {
   const points = useMemo(
     () =>
       detections.map((det) => {
-        const { x, y, w, h } = det.bbox;
-        const cx = x + w / 2;
-        const cy = y + h / 2;
+        const { min_lon, min_lat, max_lon, max_lat } = det.bbox;
+
+        const lat = (min_lat + max_lat) / 2;
+        const lon = (min_lon + max_lon) / 2;
 
         const intensity = 0.8;
-
-        return [cy, cx, intensity] as [number, number, number];
+        return [lat, lon, intensity] as [number, number, number];
       }),
     [detections]
   );

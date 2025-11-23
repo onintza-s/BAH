@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
-import type { ImageDetections, Detection } from './types/detection';
+import type { Detection, Tile, Metrics } from './types/detection';
 import { Map } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { getTheme } from './theme/theme';
+import { MetricsPanel } from './components/MetricsPanel';
+import { exportDetectionsPdf } from './utils/exportPdf';
 
-const IMAGE_PATH = '/images/photo_1.jpg';
-const JSON_PATH = '/detections/photo_1.json';
+const DETECTIONS_PATH = '/detections/detections_15_tiles.json';
+const TILES_PATH = '/tiles/tiles.json';
+const METRICS_PATH = '/metrics.json';
 
 const { palette } = getTheme('dark');
 
 type DetectionTypeFilter = 'all' | string;
 
 function App() {
-  const [data, setData] = useState<ImageDetections | null>(null);
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [tiles, setTiles] = useState<Tile[]>([]);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,12 +30,50 @@ function App() {
     setSelectedId((current) => (current === id ? null : id));
   };
 
+  const handleExportPdf = () => {
+    exportDetectionsPdf(filteredDetections, metrics);
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch(JSON_PATH);
-        const json = await res.json();
-        setData(json);
+        const [detRes, tileRes, metricsRes] = await Promise.all([
+          fetch(DETECTIONS_PATH),
+          fetch(TILES_PATH),
+          fetch(METRICS_PATH),
+        ]);
+
+        if (!detRes.ok || !tileRes.ok) {
+          throw new Error('Failed to load detections or tiles');
+        }
+
+        const rawDetections = await detRes.json();
+        const rawTiles = await tileRes.json();
+
+        const mappedDetections: Detection[] = rawDetections
+          .filter((d: any) => d && d.bbox && d.center)
+          .map((d: any, idx: number) => ({
+            id: `${d.file}-${idx}`,
+            file: d.file,
+            class: d.label,
+            confidence: d.score,
+            bbox: {
+              min_lon: d.bbox.min_lon,
+              min_lat: d.bbox.min_lat,
+              max_lon: d.bbox.max_lon,
+              max_lat: d.bbox.max_lat,
+            },
+          }));
+
+        setDetections(mappedDetections);
+        setTiles(rawTiles);
+
+        if (metricsRes.ok) {
+          const rawMetrics = await metricsRes.json();
+          setMetrics(rawMetrics as Metrics);
+        } else {
+          console.warn('metrics.json not found or failed to load');
+        }
       } catch (err) {
         setError(String(err));
         console.error(err);
@@ -40,18 +84,16 @@ function App() {
   }, []);
 
   if (error) {
-    return <div style={{ color: palette.foreground }}>Error</div>;
+    return <div style={{ color: palette.foreground }}>Error: {error}</div>;
   }
 
-  if (!data) {
+  if (detections.length === 0 || tiles.length === 0) {
     return <div style={{ color: palette.foreground }}>Loading...</div>;
   }
 
-  const allTypes = Array.from(
-    new Set<string>(data.detections.map((d) => d.class)),
-  );
+  const allTypes = Array.from(new Set<string>(detections.map((d) => d.class)));
 
-  const filteredDetections: Detection[] = data.detections
+  const filteredDetections: Detection[] = detections
     .filter((det) => (activeType === 'all' ? true : det.class === activeType))
     .filter((det) => det.confidence >= minConfidence);
 
@@ -62,13 +104,15 @@ function App() {
         height: '100vh',
         background: palette.background,
         color: palette.foreground,
+        fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      <div style={{ flex: 4 }}>
+      <div style={{ flex: 4, position: 'relative' }}>
+        {metrics && <MetricsPanel metrics={metrics} />}
+
         <Map
-          data={data}
+          tiles={tiles}
           detections={filteredDetections}
-          imagePath={IMAGE_PATH}
           selectedId={selectedId}
           onSelect={handleSelected}
           showActivity={showActivity}
@@ -86,6 +130,7 @@ function App() {
         onToggleActivity={setShowActivity}
         minConfidence={minConfidence}
         onConfidenceChange={setMinConfidence}
+        onExportPdf={handleExportPdf}
       />
     </div>
   );

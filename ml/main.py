@@ -53,7 +53,7 @@ detection_model = AutoDetectionModel.from_pretrained(
 # EVALUATION BLOCK.
 
 # 2. Setup Data
-folder = "rotterdam_opt"
+folder = "raw_tifs"
 files = sorted(glob.glob(os.path.join(folder, "*.tif")))[:100]
 geo_detections = []
 
@@ -211,3 +211,13 @@ print(labels)
 
 m.save("multi_image_with_detections.html")
 print("Saved map to multi_image_with_detections.html")
+
+summary = {
+    "num_images": len(files),
+    "num_detections": len(geo_detections),
+    "total_seconds": total_inference_time,
+    "avg_seconds_per_image": total_inference_time / len(files) if files else None
+}
+
+with open("../front/public/metrics.json", "w", encoding="utf-8") as f:
+    json.dump(summary, f, indent=2)
