@@ -70,7 +70,7 @@ for path in tqdm(files, desc="Detecting"):
 
     result = get_sliced_prediction(
         Image.fromarray(img_contiguous), detection_model,
-        slice_height=512, slice_width=512, overlap_height_ratio=0.1, verbose=0
+        slice_height=1024, slice_width=1024, overlap_height_ratio=0.1, verbose=0
     )
 
     inference_cache[path] = result
